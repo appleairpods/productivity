@@ -360,6 +360,37 @@ function setWorkDuration(minutes) {
   updateTimerDisplay();
 }
 
+function renderFocusMode() {
+  const lang = state.settings.lang;
+  const parallel = !!state.settings.parallelMode;
+
+  $$('.mode-btn').forEach(btn => {
+    const isParallelBtn = btn.dataset.mode === 'parallel';
+    btn.classList.toggle('active', isParallelBtn ? parallel : !parallel);
+  });
+
+  $('#view-home')?.classList.toggle('parallel-mode', parallel);
+
+  const hint = $('#mode-hint');
+  if (hint) {
+    hint.textContent = parallel ? t('modeParallelHint', lang) : t('modeSingleHint', lang);
+    hint.classList.remove('hidden');
+  }
+}
+
+function setFocusMode(mode) {
+  const nextParallel = mode === 'parallel';
+  if (state.settings.parallelMode === nextParallel) {
+    if (!nextParallel) {
+      $('#directions-list')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+  state.settings.parallelMode = nextParallel;
+  persistSettings();
+  renderFocusMode();
+}
+
 function renderDirections() {
   const container = $('#directions-list');
   container.innerHTML = '';
@@ -584,10 +615,7 @@ function renderAll() {
   $('#setting-long-break').value = state.settings.longBreak;
   $('#setting-long-break-interval').value = state.settings.longBreakInterval;
 
-  $$('.mode-btn').forEach(btn => {
-    const isParallel = btn.dataset.mode === 'parallel';
-    btn.classList.toggle('active', isParallel ? state.settings.parallelMode : !state.settings.parallelMode);
-  });
+  renderFocusMode();
 }
 
 function openDirectionModal(id = null) {
@@ -772,22 +800,10 @@ function bindEvents() {
     renderTasks();
   }
 
-  $('#active-direction-btn').addEventListener('click', () => {
-    $('#section-dashboard').scrollIntoView({ behavior: 'smooth' });
-    setTimeout(() => $('#directions-list')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
-  });
-
-  // Mode toggle
-  $$('.mode-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (btn.dataset.mode === 'parallel') {
-        state.settings.parallelMode = true;
-      } else {
-        state.settings.parallelMode = false;
-      }
-      await persistSettings();
-      renderAll();
-    });
+  $('#mode-toggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mode-btn');
+    if (!btn) return;
+    setFocusMode(btn.dataset.mode === 'parallel' ? 'parallel' : 'single');
   });
 
   // Settings

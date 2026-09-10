@@ -532,10 +532,10 @@ body::before {
 .bottom-nav {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: sticky;
-  top: 72px;
-  z-index: 10;
+  top: 0;
+  z-index: 15;
   padding: 6px;
   border-radius: 14px;
   background: rgba(17, 19, 26, 0.8);
@@ -568,8 +568,13 @@ body::before {
 .mode-toggle {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 72px;
+  z-index: 20;
+  padding: 8px 0;
+  background: linear-gradient(180deg, var(--bg) 70%, transparent);
 }
 
 .mode-btn {
@@ -590,6 +595,21 @@ body::before {
   color: white;
   border-color: transparent;
   box-shadow: 0 8px 24px rgba(20, 184, 166, 0.22);
+}
+
+.mode-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+#view-home.parallel-mode .direction-chip {
+  opacity: 0.92;
+}
+
+#view-home.parallel-mode .direction-chip.active {
+  box-shadow: 0 0 0 2px var(--chip-color, var(--accent));
 }
 
 .card {
