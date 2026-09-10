@@ -129,7 +129,7 @@
             <p class="hint" data-i18n="tasksHint">По всем направлениям · выбрать, изменить, удалить</p>
             <div id="tasks-list" class="tasks-list"></div>
             <div class="add-task-row">
-              <input type="text" id="new-task-input" placeholder="Новая задача..." data-i18n-placeholder="newTask">
+              <input type="text" class="field-input field-input--task" id="new-task-input" placeholder="Новая задача..." data-i18n-placeholder="newTask">
               <button type="button" id="btn-add-task" class="add-btn small" data-i18n="addTask">Добавить задачу</button>
             </div>
           </div>
@@ -214,17 +214,26 @@
 
           <section>
             <h2 data-i18n="breaks">Перерывы</h2>
-            <label>
+            <label class="form-field form-field--settings">
               <span data-i18n="shortBreak">Короткий перерыв</span>
-              <input type="number" id="setting-short-break" min="1" max="30" value="5"> <span data-i18n="min">мин</span>
+              <div class="field-with-suffix">
+                <input type="number" class="field-input" id="setting-short-break" min="1" max="30" value="5">
+                <span data-i18n="min">мин</span>
+              </div>
             </label>
-            <label>
+            <label class="form-field form-field--settings">
               <span data-i18n="longBreak">Длинный перерыв</span>
-              <input type="number" id="setting-long-break" min="1" max="60" value="15"> <span data-i18n="min">мин</span>
+              <div class="field-with-suffix">
+                <input type="number" class="field-input" id="setting-long-break" min="1" max="60" value="15">
+                <span data-i18n="min">мин</span>
+              </div>
             </label>
-            <label>
+            <label class="form-field form-field--settings">
               <span data-i18n="longBreakEvery">Длинный перерыв каждые</span>
-              <input type="number" id="setting-long-break-interval" min="2" max="10" value="4"> <span data-i18n="pomodoros">помидоров</span>
+              <div class="field-with-suffix">
+                <input type="number" class="field-input" id="setting-long-break-interval" min="2" max="10" value="4">
+                <span data-i18n="pomodoros">помидоров</span>
+              </div>
             </label>
           </section>
 
@@ -246,21 +255,21 @@
       <div class="modal-backdrop"></div>
       <div class="modal-content small">
         <h2 id="direction-modal-title" data-i18n="addDirection">Добавить направление</h2>
-        <label>
+        <label class="form-field">
           <span data-i18n="directionName">Название</span>
-          <input type="text" id="direction-name" maxlength="30">
+          <input type="text" class="field-input" id="direction-name" maxlength="30" autocomplete="off">
         </label>
-        <label>
+        <label class="form-field">
           <span data-i18n="weeklyBlocks">Блоков в неделю</span>
-          <input type="number" id="direction-blocks" min="0" max="100" value="10">
+          <input type="number" class="field-input" id="direction-blocks" min="0" max="100" value="10">
         </label>
-        <label class="checkbox-label">
+        <label class="form-field form-field--inline checkbox-label">
           <input type="checkbox" id="direction-unlimited">
           <span data-i18n="noLimit">Без лимита</span>
         </label>
-        <label>
+        <label class="form-field">
           <span data-i18n="color">Цвет</span>
-          <input type="color" id="direction-color" value="#14b8a6">
+          <input type="color" class="field-input field-input--color" id="direction-color" value="#14b8a6">
         </label>
         <div class="modal-actions">
           <button type="button" id="direction-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
@@ -274,9 +283,9 @@
       <div class="modal-backdrop"></div>
       <div class="modal-content small">
         <h2 data-i18n="customDuration">Своя длительность</h2>
-        <label>
+        <label class="form-field">
           <span data-i18n="workMinutes">Минут работы</span>
-          <input type="number" id="custom-work-min" min="1" max="120" value="25">
+          <input type="number" class="field-input" id="custom-work-min" min="1" max="120" value="25" inputmode="numeric">
         </label>
         <div class="modal-actions">
           <button type="button" id="custom-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
@@ -290,7 +299,10 @@
       <div class="modal-backdrop"></div>
       <div class="modal-content small">
         <h2 data-i18n="changePomodoro">Изменить номер помидора</h2>
-        <input type="number" id="pomodoro-number-input" min="1" max="99" value="1">
+        <label class="form-field">
+          <span>#</span>
+          <input type="number" class="field-input" id="pomodoro-number-input" min="1" max="99" value="1" inputmode="numeric">
+        </label>
         <div class="modal-actions">
           <button type="button" id="pomodoro-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
           <button type="button" id="pomodoro-save" class="primary-btn" data-i18n="save">Сохранить</button>

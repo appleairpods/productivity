@@ -746,21 +746,9 @@ body::before {
 
 .add-task-row { display: flex; gap: 8px; }
 
-.add-task-row input {
+.add-task-row input,
+.add-task-row .field-input {
   flex: 1;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.add-task-row input:focus {
-  outline: none;
-  border-color: rgba(20, 184, 166, 0.45);
-  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .weekly-chart { display: flex; flex-direction: column; gap: 14px; }
@@ -984,6 +972,136 @@ body::before {
   align-self: center;
 }
 
+.modal-content.small > h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-field > span:first-child {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.form-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-field--inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.form-field--settings {
+  margin-bottom: 14px;
+}
+
+.field-input {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.field-input:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: rgba(20, 184, 166, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.field-input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+.field-input[type="number"]::-webkit-inner-spin-button,
+.field-input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.45;
+  height: 28px;
+}
+
+.field-input--color {
+  height: 48px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.field-input--color::-webkit-color-swatch-wrapper {
+  padding: 4px;
+}
+
+.field-input--color::-webkit-color-swatch {
+  border: none;
+  border-radius: 10px;
+}
+
+.field-input--task {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.field-with-suffix {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-with-suffix .field-input {
+  max-width: 96px;
+  text-align: center;
+  padding-inline: 12px;
+}
+
+.field-with-suffix > span:last-child {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .field-input {
+  color-scheme: dark;
+}
+
+[data-theme="light"] .field-input {
+  color-scheme: light;
+  background: var(--bg-elevated);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -1003,7 +1121,7 @@ body::before {
   color: var(--text-muted);
 }
 
-.modal-body label {
+.modal-body label:not(.form-field) {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1011,22 +1129,8 @@ body::before {
   font-size: 14px;
 }
 
-.modal-body label input[type="number"],
-.modal-body label input[type="text"],
-.modal-content.small input[type="number"] {
+.modal-body label:not(.form-field) .field-input {
   flex: 1;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--text);
-  font-family: inherit;
-}
-
-.modal-body label input:focus,
-.modal-content.small input:focus {
-  outline: none;
-  border-color: rgba(20, 184, 166, 0.45);
 }
 
 .info-text {
