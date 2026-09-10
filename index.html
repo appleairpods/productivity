@@ -272,9 +272,12 @@
           <span data-i18n="color">Цвет</span>
           <input type="color" class="field-input field-input--color" id="direction-color" value="#14b8a6">
         </label>
-        <div class="modal-actions">
-          <button type="button" id="direction-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
-          <button type="button" id="direction-save" class="primary-btn" data-i18n="save">Сохранить</button>
+        <div class="modal-actions modal-actions--split">
+          <button type="button" id="direction-delete" class="danger-btn hidden" data-i18n="deleteDirection">Удалить направление</button>
+          <div class="modal-actions-right">
+            <button type="button" id="direction-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
+            <button type="button" id="direction-save" class="primary-btn" data-i18n="save">Сохранить</button>
+          </div>
         </div>
       </div>
     </div>

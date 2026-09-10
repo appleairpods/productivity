@@ -647,8 +647,8 @@ body::before {
 .local-badge { color: var(--accent) !important; }
 
 .directions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -667,6 +667,52 @@ body::before {
   transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
   position: relative;
   overflow: hidden;
+  width: 100%;
+}
+
+.direction-chip-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.direction-chip-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.direction-chip-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.chip-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.chip-action:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.14);
+}
+
+.chip-action--delete:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .direction-chip::before {
@@ -1177,11 +1223,50 @@ body::before {
 
 .settings-list .dir-actions button {
   background: none;
-  border: none;
+  border: 1px solid var(--border);
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-size: 13px;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.settings-list .dir-actions button:hover {
+  color: var(--text);
+}
+
+.settings-list .dir-actions button[data-del]:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.danger-btn {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.danger-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+}
+
+.modal-actions--split {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-actions-right {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .theme-toggle, .export-row {

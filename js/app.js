@@ -397,10 +397,14 @@ function renderDirections() {
   const activeId = state.settings.activeDirectionId;
 
   state.directions.forEach(dir => {
+    const row = document.createElement('div');
+    row.className = 'direction-chip-row';
+
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `direction-chip${dir.id === activeId ? ' active' : ''}`;
+    btn.className = `direction-chip direction-chip-main${dir.id === activeId ? ' active' : ''}`;
     btn.style.setProperty('--chip-color', dir.color);
+    btn.dataset.directionId = dir.id;
 
     const usedBlocks = getUsedBlocks(dir.id);
     let meta;
@@ -411,8 +415,18 @@ function renderDirections() {
     }
 
     btn.innerHTML = `<span class="name">${escapeHtml(getDirectionName(dir))}</span><span class="meta">${meta}</span>`;
-    btn.addEventListener('click', () => selectDirection(dir.id));
-    container.appendChild(btn);
+    row.appendChild(btn);
+
+    if (!dir.isDefault && dir.id !== 'default') {
+      const actions = document.createElement('div');
+      actions.className = 'direction-chip-actions';
+      actions.innerHTML = `
+        <button type="button" class="chip-action" data-edit-dir="${dir.id}" title="${t('edit', state.settings.lang)}">✎</button>
+        <button type="button" class="chip-action chip-action--delete" data-del-dir="${dir.id}" title="${t('delete', state.settings.lang)}">✕</button>`;
+      row.appendChild(actions);
+    }
+
+    container.appendChild(row);
   });
 }
 
@@ -427,17 +441,10 @@ function renderSettingsDirections() {
     li.innerHTML = `
       <span><span style="color:${dir.color}">●</span> ${escapeHtml(getDirectionName(dir))} · ${meta}</span>
       <span class="dir-actions">
-        ${dir.isDefault ? '' : `<button type="button" data-edit="${dir.id}">${t('edit', state.settings.lang)}</button>`}
-        ${dir.isDefault ? '' : `<button type="button" data-del="${dir.id}">${t('delete', state.settings.lang)}</button>`}
+        ${dir.isDefault || dir.id === 'default' ? '' : `<button type="button" data-edit="${dir.id}">${t('edit', state.settings.lang)}</button>`}
+        ${dir.isDefault || dir.id === 'default' ? '' : `<button type="button" data-del="${dir.id}">${t('delete', state.settings.lang)}</button>`}
       </span>`;
     list.appendChild(li);
-  });
-
-  list.querySelectorAll('[data-edit]').forEach(btn => {
-    btn.addEventListener('click', () => openDirectionModal(btn.dataset.edit));
-  });
-  list.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => removeDirection(btn.dataset.del));
   });
 }
 
@@ -455,14 +462,40 @@ function selectDirection(id) {
 }
 
 async function removeDirection(id) {
-  if (id === 'default') return;
-  await deleteDirection(id);
-  if (state.settings.activeDirectionId === id) {
-    state.settings.activeDirectionId = 'default';
+  if (!id || id === 'default') {
+    showToast(t('cannotDeleteDefault', state.settings.lang));
+    return;
   }
-  state.directions = await getDirections();
-  await persistSettings();
-  renderAll();
+
+  const dir = state.directions.find(d => d.id === id);
+  if (dir?.isDefault) {
+    showToast(t('cannotDeleteDefault', state.settings.lang));
+    return;
+  }
+
+  try {
+    await deleteDirection(id);
+
+    for (const task of state.tasks.filter(tk => tk.directionId === id)) {
+      task.directionId = 'default';
+      await saveTask(task);
+    }
+
+    if (state.settings.activeDirectionId === id) {
+      state.settings.activeDirectionId = 'default';
+    }
+
+    state.directions = await getDirections();
+    state.tasks = await getTasks();
+    await persistSettings();
+
+    $('#direction-modal').classList.add('hidden');
+    showToast(t('directionDeleted', state.settings.lang));
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    showToast(t('importError', state.settings.lang));
+  }
 }
 
 function renderTasks() {
@@ -622,20 +655,24 @@ function openDirectionModal(id = null) {
   state.editingDirectionId = id;
   const modal = $('#direction-modal');
   modal.classList.remove('hidden');
+  const deleteBtn = $('#direction-delete');
 
   if (id) {
     const dir = state.directions.find(d => d.id === id);
     $('#direction-modal-title').textContent = t('edit', state.settings.lang);
-    $('#direction-name').value = dir.nameKey ? '' : dir.name;
+    $('#direction-name').value = dir.nameKey ? getDirectionName(dir) : dir.name;
     $('#direction-blocks').value = dir.weeklyBlocks || 10;
     $('#direction-unlimited').checked = dir.unlimited;
     $('#direction-color').value = dir.color;
+    const canDelete = !dir.isDefault && dir.id !== 'default';
+    deleteBtn.classList.toggle('hidden', !canDelete);
   } else {
     $('#direction-modal-title').textContent = t('addDirection', state.settings.lang);
     $('#direction-name').value = '';
     $('#direction-blocks').value = 10;
     $('#direction-unlimited').checked = false;
     $('#direction-color').value = '#14b8a6';
+    deleteBtn.classList.add('hidden');
   }
 }
 
@@ -646,7 +683,7 @@ async function saveDirectionFromModal() {
   const unlimited = $('#direction-unlimited').checked;
   const dir = {
     id: state.editingDirectionId || generateId(),
-    name: name || 'Direction',
+    name,
     weeklyBlocks: unlimited ? null : parseInt($('#direction-blocks').value) || 10,
     unlimited,
     color: $('#direction-color').value,
@@ -775,6 +812,48 @@ function bindEvents() {
   $('#direction-save').addEventListener('click', saveDirectionFromModal);
   $('#direction-cancel').addEventListener('click', () => {
     $('#direction-modal').classList.add('hidden');
+  });
+  $('#direction-delete').addEventListener('click', () => {
+    if (state.editingDirectionId) {
+      removeDirection(state.editingDirectionId);
+    }
+  });
+
+  $('#directions-list')?.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('[data-del-dir]');
+    const editBtn = e.target.closest('[data-edit-dir]');
+    if (delBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      removeDirection(delBtn.dataset.delDir);
+      return;
+    }
+    if (editBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openDirectionModal(editBtn.dataset.editDir);
+      return;
+    }
+    const chip = e.target.closest('.direction-chip-main');
+    if (chip?.dataset.directionId) {
+      selectDirection(chip.dataset.directionId);
+    }
+  });
+
+  $('#settings-directions')?.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('[data-del]');
+    const editBtn = e.target.closest('[data-edit]');
+    if (delBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      removeDirection(delBtn.dataset.del);
+      return;
+    }
+    if (editBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openDirectionModal(editBtn.dataset.edit);
+    }
   });
 
   // Tasks
