@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Помодоро-таймер с недельным бюджетом фокуса — локальная версия">
+  <title>Focus Limit Local — помодоро-таймер с недельным бюджетом фокуса</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Onboarding -->
+    <div id="onboarding" class="onboarding hidden">
+      <div class="lang-switch top-left">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="ru" class="active">RU</button>
+      </div>
+      <div class="onboarding-glow"></div>
+      <div class="onboarding-content">
+        <h1 id="onboarding-title"></h1>
+        <p id="onboarding-text"></p>
+        <p id="onboarding-subtext" class="subtext hidden"></p>
+        <div class="onboarding-dots">
+          <button type="button" class="dot active" data-step="0"></button>
+          <button type="button" class="dot" data-step="1"></button>
+          <button type="button" class="dot" data-step="2"></button>
+        </div>
+        <div class="onboarding-nav">
+          <button type="button" id="onboarding-back" class="text-btn hidden" data-i18n="back">Назад</button>
+          <button type="button" id="onboarding-skip" class="text-btn" data-i18n="skip">Пропустить</button>
+          <button type="button" id="onboarding-next" class="primary-btn" data-i18n="next">Далее</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main app -->
+    <div id="main-app" class="main-app hidden">
+      <header class="top-bar">
+        <div class="lang-switch">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="ru" class="active">RU</button>
+        </div>
+        <div class="top-actions">
+          <button type="button" id="btn-notifications" class="icon-btn" title="Уведомления">🔔</button>
+          <button type="button" id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
+        </div>
+      </header>
+
+      <!-- Timer section -->
+      <section id="section-timer" class="section timer-section active">
+        <div class="timer-glow"></div>
+        <div class="phase-tabs">
+          <button type="button" class="phase-tab active" data-phase="work" data-i18n="work">Работа</button>
+          <button type="button" class="phase-tab" data-phase="shortBreak" data-i18n="shortBreak">Короткий перерыв</button>
+          <button type="button" class="phase-tab" data-phase="longBreak" data-i18n="longBreak">Длинный перерыв</button>
+        </div>
+
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 200 200">
+            <circle class="ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="ring-progress" cx="100" cy="100" r="90"/>
+          </svg>
+          <div class="timer-center">
+            <button type="button" id="btn-pomodoro-num" class="pomodoro-num">#1</button>
+            <div id="timer-display" class="timer-display">25:00</div>
+            <div id="active-direction-label" class="direction-label">другое</div>
+          </div>
+        </div>
+
+        <div class="timer-controls">
+          <button type="button" id="btn-start" class="start-btn">
+            <span class="play-icon">▶</span>
+            <span data-i18n="start">Старт</span>
+          </button>
+          <button type="button" id="btn-skip" class="skip-btn" title="Пропустить фазу">⏭</button>
+        </div>
+
+        <div class="duration-presets">
+          <button type="button" class="preset active" data-min="25">25 <span data-i18n="min">мин</span></button>
+          <button type="button" class="preset" data-min="45">45 <span data-i18n="min">мин</span></button>
+          <button type="button" class="preset" data-min="50">50 <span data-i18n="min">мин</span></button>
+          <button type="button" class="preset" data-min="custom" data-i18n="custom">свои</button>
+        </div>
+
+        <button type="button" id="scroll-down" class="scroll-hint">↓</button>
+      </section>
+
+      <!-- Dashboard section -->
+      <section id="section-dashboard" class="section dashboard-section">
+        <nav class="bottom-nav">
+          <button type="button" class="nav-item active" data-view="home" data-i18n="home">Главная</button>
+          <button type="button" class="nav-item" data-view="journal" data-i18n="journal">Журнал</button>
+        </nav>
+
+        <div id="view-home" class="view active">
+          <div class="mode-toggle">
+            <button type="button" class="mode-btn" data-mode="parallel" data-i18n="parallel">Параллельно</button>
+            <button type="button" class="mode-btn active" data-mode="single" id="active-direction-btn">другое</button>
+          </div>
+
+          <div class="card">
+            <h2 data-i18n="focusOn">На чём фокус?</h2>
+            <p class="hint" data-i18n="tapDirection">Тапни направление для фокуса</p>
+            <div id="directions-list" class="directions-grid"></div>
+            <button type="button" id="btn-add-direction" class="add-btn" data-i18n="addDirection">+ Добавить направление</button>
+          </div>
+
+          <div class="card">
+            <h2><span data-i18n="allTasks">Все задачи</span> <span id="tasks-count" class="badge">0</span></h2>
+            <p class="hint" data-i18n="tasksHint">По всем направлениям · выбрать, изменить, удалить</p>
+            <div id="tasks-list" class="tasks-list"></div>
+            <div class="add-task-row">
+              <input type="text" id="new-task-input" placeholder="Новая задача..." data-i18n-placeholder="newTask">
+              <button type="button" id="btn-add-task" class="add-btn small" data-i18n="addTask">Добавить задачу</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 id="weekly-title" data-i18n="weeklyLimiter">Лимитер недели</h2>
+            <p class="hint" data-i18n="weeklyHint">Недельный план в блоках (1 блок = 50 мин фокуса + 10 мин отдыха)</p>
+            <div id="weekly-chart" class="weekly-chart"></div>
+          </div>
+        </div>
+
+        <div id="view-journal" class="view">
+          <div class="card">
+            <h2 data-i18n="journal">Журнал</h2>
+            <p class="hint local-badge" data-i18n="journalLocal">Вся история хранится локально на вашем компьютере</p>
+            <div id="journal-filters" class="journal-filters"></div>
+            <div id="journal-list" class="journal-list"></div>
+          </div>
+        </div>
+
+        <button type="button" id="scroll-up" class="scroll-hint up">↑</button>
+      </section>
+
+      <!-- Floating actions -->
+      <div class="fab-group">
+        <button type="button" id="btn-music" class="fab" title="Музыка">🎵</button>
+      </div>
+
+      <!-- Music panel -->
+      <div id="music-panel" class="side-panel hidden">
+        <div class="panel-header">
+          <h3 data-i18n="music">Музыка</h3>
+          <button type="button" class="close-panel">×</button>
+        </div>
+        <div class="music-tracks">
+          <button type="button" class="track" data-track="rain">🌧 Дождь</button>
+          <button type="button" class="track" data-track="forest">🌲 Лес</button>
+          <button type="button" class="track" data-track="cafe">☕ Кафе</button>
+          <button type="button" class="track off" data-track="off" data-i18n="musicOff">Выключить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content settings-content">
+        <div class="modal-header">
+          <button type="button" id="settings-back" class="text-btn" data-i18n="back">Назад</button>
+          <h1 data-i18n="settings">Настройки</h1>
+        </div>
+        <div class="modal-body">
+          <section>
+            <h2 data-i18n="directions">Направления</h2>
+            <ul id="settings-directions" class="settings-list"></ul>
+            <button type="button" id="settings-add-direction" class="add-btn" data-i18n="addDirection">+ Добавить направление</button>
+          </section>
+
+          <section>
+            <h2 data-i18n="dataStorage">Хранение данных</h2>
+            <p class="info-text" data-i18n="dataStorageInfo">Данные хранятся локально в браузере (IndexedDB). Полная история журнала сохраняется без ограничений. Экспорт и импорт доступны ниже.</p>
+            <div class="export-row">
+              <button type="button" id="btn-export" class="secondary-btn" data-i18n="export">Экспорт данных</button>
+              <label class="secondary-btn import-label">
+                <span data-i18n="import">Импорт данных</span>
+                <input type="file" id="import-file" accept=".json" hidden>
+              </label>
+            </div>
+          </section>
+
+          <section>
+            <h2 data-i18n="appearance">Оформление</h2>
+            <div class="theme-toggle">
+              <button type="button" class="theme-btn active" data-theme="dark" data-i18n="dark">Тёмная</button>
+              <button type="button" class="theme-btn" data-theme="light" data-i18n="light">Светлая</button>
+            </div>
+          </section>
+
+          <section>
+            <h2 data-i18n="breaks">Перерывы</h2>
+            <label>
+              <span data-i18n="shortBreak">Короткий перерыв</span>
+              <input type="number" id="setting-short-break" min="1" max="30" value="5"> <span data-i18n="min">мин</span>
+            </label>
+            <label>
+              <span data-i18n="longBreak">Длинный перерыв</span>
+              <input type="number" id="setting-long-break" min="1" max="60" value="15"> <span data-i18n="min">мин</span>
+            </label>
+            <label>
+              <span data-i18n="longBreakEvery">Длинный перерыв каждые</span>
+              <input type="number" id="setting-long-break-interval" min="2" max="10" value="4"> <span data-i18n="pomodoros">помидоров</span>
+            </label>
+          </section>
+
+          <section>
+            <h2 data-i18n="notifications">Системные уведомления</h2>
+            <p class="info-text" data-i18n="notificationsInfo">Баннер, когда заканчивается блок или перерыв.</p>
+            <button type="button" id="btn-enable-notifications" class="secondary-btn" data-i18n="enableNotifications">Разрешить уведомления</button>
+          </section>
+
+          <section>
+            <button type="button" id="btn-reset-onboarding" class="text-btn" data-i18n="showOnboarding">Показать онбординг снова</button>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direction modal -->
+    <div id="direction-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content small">
+        <h2 id="direction-modal-title" data-i18n="addDirection">Добавить направление</h2>
+        <label>
+          <span data-i18n="directionName">Название</span>
+          <input type="text" id="direction-name" maxlength="30">
+        </label>
+        <label>
+          <span data-i18n="weeklyBlocks">Блоков в неделю</span>
+          <input type="number" id="direction-blocks" min="0" max="100" value="10">
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="direction-unlimited">
+          <span data-i18n="noLimit">Без лимита</span>
+        </label>
+        <label>
+          <span data-i18n="color">Цвет</span>
+          <input type="color" id="direction-color" value="#14b8a6">
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="direction-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
+          <button type="button" id="direction-save" class="primary-btn" data-i18n="save">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom duration modal -->
+    <div id="custom-duration-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content small">
+        <h2 data-i18n="customDuration">Своя длительность</h2>
+        <label>
+          <span data-i18n="workMinutes">Минут работы</span>
+          <input type="number" id="custom-work-min" min="1" max="120" value="25">
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="custom-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
+          <button type="button" id="custom-save" class="primary-btn" data-i18n="save">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pomodoro number modal -->
+    <div id="pomodoro-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content small">
+        <h2 data-i18n="changePomodoro">Изменить номер помидора</h2>
+        <input type="number" id="pomodoro-number-input" min="1" max="99" value="1">
+        <div class="modal-actions">
+          <button type="button" id="pomodoro-cancel" class="text-btn" data-i18n="cancel">Отмена</button>
+          <button type="button" id="pomodoro-save" class="primary-btn" data-i18n="save">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio-rain" loop preload="none">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="audio-forest" loop preload="none">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749913a.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="audio-cafe" loop preload="none">
+    <source src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_062bf10550.mp3" type="audio/mpeg">
+  </audio>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
