@@ -83,6 +83,13 @@ export const translations = {
     workDone: 'Рабочий блок завершён — время перерыва',
     breakDone: 'Перерыв окончен — можно работать',
     allWeeks: 'Все недели',
+    journalEmpty: 'Журнал пуст',
+    notificationsGranted: 'Уведомления включены',
+    notificationsDenied: 'Уведомления отклонены',
+    directionSaved: 'Направление сохранено',
+    taskAdded: 'Задача добавлена',
+    importSuccess: 'Данные импортированы',
+    importError: 'Не удалось импортировать файл',
   },
   en: {
     back: 'Back',
@@ -168,6 +175,13 @@ export const translations = {
     workDone: 'Work block done — time for a break',
     breakDone: 'Break over — back to work',
     allWeeks: 'All weeks',
+    journalEmpty: 'Journal is empty',
+    notificationsGranted: 'Notifications enabled',
+    notificationsDenied: 'Notifications denied',
+    directionSaved: 'Direction saved',
+    taskAdded: 'Task added',
+    importSuccess: 'Data imported',
+    importError: 'Could not import file',
   },
 };
 

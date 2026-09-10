@@ -17,10 +17,29 @@ const state = {
   editingDirectionId: null,
   journalFilter: 'all',
   tickInterval: null,
+  completingPhase: false,
+  persistTimer: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
+
+function showToast(message) {
+  const root = $('#toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = message;
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function schedulePersist() {
+  if (state.persistTimer) clearTimeout(state.persistTimer);
+  state.persistTimer = setTimeout(() => {
+    persistSettings();
+    state.persistTimer = null;
+  }, 400);
+}
 
 async function init() {
   await initDefaultDirection();
@@ -40,7 +59,26 @@ async function init() {
 
   bindEvents();
   restoreTimerState();
+  restoreMusic();
   renderAll();
+}
+
+function restoreMusic() {
+  if (!state.settings.musicTrack) return;
+  const trackBtn = document.querySelector(`.track[data-track="${state.settings.musicTrack}"]`);
+  const audio = $(`#audio-${state.settings.musicTrack}`);
+  if (trackBtn && audio) {
+    trackBtn.classList.add('active');
+    audio.play().catch(() => {});
+  }
+}
+
+function updatePhaseVisuals() {
+  const phase = state.settings.timerPhase;
+  $('#section-timer').dataset.phase = phase;
+  const dir = getActiveDirection();
+  const color = phase === 'work' ? (dir?.color || '#14b8a6') : '#60a5fa';
+  document.documentElement.style.setProperty('--ring-progress', phase === 'work' ? 'var(--text)' : color);
 }
 
 function applyTheme(theme) {
@@ -51,17 +89,21 @@ function applyTheme(theme) {
 }
 
 function applyLang(lang) {
-  state.settings.lang = lang;
+  if (state.settings) state.settings.lang = lang;
   $$('.lang-switch button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   document.documentElement.lang = lang;
   $$('[data-i18n]').forEach(el => {
+    if (el.children.length > 0 && !el.classList.contains('preset')) return;
     const key = el.dataset.i18n;
     if (key) el.textContent = t(key, lang);
   });
   $$('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder, lang);
+  });
+  $$('.preset-unit').forEach(el => {
+    el.textContent = t('min', lang);
   });
   updateOnboardingContent();
 }
@@ -144,15 +186,18 @@ function updateTimerDisplay() {
 
   const startBtn = $('#btn-start');
   const label = startBtn.querySelector('span:last-child');
+  const playIcon = startBtn.querySelector('.play-icon');
   if (state.settings.timerRunning) {
     startBtn.classList.add('running');
     label.textContent = t('pause', state.settings.lang);
-    startBtn.querySelector('.play-icon').textContent = '⏸';
+    playIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
   } else {
     startBtn.classList.remove('running');
     label.textContent = t('start', state.settings.lang);
-    startBtn.querySelector('.play-icon').textContent = '▶';
+    playIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   }
+
+  updatePhaseVisuals();
 
   $$('.phase-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.phase === state.settings.timerPhase);
@@ -189,7 +234,7 @@ function tick() {
   }
   state.settings.timerRemaining--;
   updateTimerDisplay();
-  persistSettings();
+  schedulePersist();
 }
 
 function restoreTimerState() {
@@ -206,7 +251,10 @@ function restoreTimerState() {
 }
 
 async function completePhase() {
+  if (state.completingPhase) return;
+  state.completingPhase = true;
   stopTimerTick();
+
   const phase = state.settings.timerPhase;
   const totalSeconds = getPhaseDuration(phase);
   const completedSeconds = totalSeconds - state.settings.timerRemaining;
@@ -246,6 +294,7 @@ async function completePhase() {
   updateTimerDisplay();
   renderWeeklyChart();
   renderJournal();
+  state.completingPhase = false;
 }
 
 function notifyPhaseComplete(phase) {
@@ -287,6 +336,7 @@ function toggleTimer() {
 }
 
 function skipPhase() {
+  stopTimerTick();
   state.settings.timerRemaining = 0;
   completePhase();
 }
@@ -502,7 +552,7 @@ async function renderJournal() {
   }
 
   if (sessions.length === 0) {
-    list.innerHTML = `<p class="empty-state">${t('journal', lang)} — пусто</p>`;
+    list.innerHTML = `<p class="empty-state">${t('journalEmpty', lang)}</p>`;
     return;
   }
 
@@ -578,6 +628,7 @@ async function saveDirectionFromModal() {
   await saveDirection(dir);
   state.directions = await getDirections();
   $('#direction-modal').classList.add('hidden');
+  showToast(t('directionSaved', state.settings.lang));
   renderAll();
 }
 
@@ -717,8 +768,14 @@ function bindEvents() {
     await saveTask(task);
     state.tasks = await getTasks();
     $('#new-task-input').value = '';
+    showToast(t('taskAdded', state.settings.lang));
     renderTasks();
   }
+
+  $('#active-direction-btn').addEventListener('click', () => {
+    $('#section-dashboard').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => $('#directions-list')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
+  });
 
   // Mode toggle
   $$('.mode-btn').forEach(btn => {
@@ -770,11 +827,24 @@ function bindEvents() {
     });
   });
 
-  $('#btn-enable-notifications').addEventListener('click', async () => {
+  $('#btn-enable-notifications').addEventListener('click', requestNotifications);
+  $('#btn-notifications').addEventListener('click', requestNotifications);
+
+  async function requestNotifications() {
+    if (!('Notification' in window)) {
+      showToast('Notifications not supported');
+      return;
+    }
     const perm = await Notification.requestPermission();
     state.settings.notificationsEnabled = perm === 'granted';
     await persistSettings();
-  });
+    $('#btn-notifications').classList.toggle('active', perm === 'granted');
+    showToast(t(perm === 'granted' ? 'notificationsGranted' : 'notificationsDenied', state.settings.lang));
+  }
+
+  if (state.settings.notificationsEnabled && Notification.permission === 'granted') {
+    $('#btn-notifications').classList.add('active');
+  }
 
   $('#btn-reset-onboarding').addEventListener('click', async () => {
     state.settings.onboardingDone = false;
@@ -798,14 +868,20 @@ function bindEvents() {
   $('#import-file').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const text = await file.text();
-    const data = JSON.parse(text);
-    await importAllData(data);
-    state.settings = await loadSettings();
-    state.directions = await getDirections();
-    state.tasks = await getTasks();
-    state.sessions = await getSessions(getWeekKey());
-    renderAll();
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await importAllData(data);
+      state.settings = await loadSettings();
+      state.directions = await getDirections();
+      state.tasks = await getTasks();
+      state.sessions = await getSessions(getWeekKey());
+      renderAll();
+      showToast(t('importSuccess', state.settings.lang));
+    } catch (err) {
+      console.error(err);
+      showToast(t('importError', state.settings.lang));
+    }
     e.target.value = '';
   });
 
@@ -855,6 +931,17 @@ function bindEvents() {
     if (document.visibilityState === 'visible' && state.settings.timerRunning) {
       restoreTimerState();
     }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' || e.target.closest('input, textarea, select')) return;
+    if (!$('#settings-modal').classList.contains('hidden')) return;
+    if (!$('#direction-modal').classList.contains('hidden')) return;
+    if (!$('#custom-duration-modal').classList.contains('hidden')) return;
+    if (!$('#pomodoro-modal').classList.contains('hidden')) return;
+    if (!$('#onboarding').classList.contains('hidden')) return;
+    e.preventDefault();
+    toggleTimer();
   });
 }
 

@@ -7,11 +7,12 @@
   <title>Focus Limit Local — помодоро-таймер с недельным бюджетом фокуса</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>">
 </head>
 <body>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
   <div id="app">
     <!-- Onboarding -->
     <div id="onboarding" class="onboarding hidden">
@@ -40,19 +41,26 @@
     <!-- Main app -->
     <div id="main-app" class="main-app hidden">
       <header class="top-bar">
-        <div class="lang-switch">
-          <button type="button" data-lang="en">EN</button>
-          <button type="button" data-lang="ru" class="active">RU</button>
+        <div class="top-bar-left">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="lang-switch">
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="ru" class="active">RU</button>
+          </div>
         </div>
         <div class="top-actions">
-          <button type="button" id="btn-notifications" class="icon-btn" title="Уведомления">🔔</button>
-          <button type="button" id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
+          <button type="button" id="btn-notifications" class="icon-btn" title="Уведомления" aria-label="Уведомления">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+          <button type="button" id="btn-settings" class="icon-btn" title="Настройки" aria-label="Настройки">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
         </div>
       </header>
 
       <!-- Timer section -->
-      <section id="section-timer" class="section timer-section active">
-        <div class="timer-glow"></div>
+      <section id="section-timer" class="section timer-section active" data-phase="work">
+        <div class="timer-glow" id="timer-glow"></div>
         <div class="phase-tabs">
           <button type="button" class="phase-tab active" data-phase="work" data-i18n="work">Работа</button>
           <button type="button" class="phase-tab" data-phase="shortBreak" data-i18n="shortBreak">Короткий перерыв</button>
@@ -64,6 +72,7 @@
             <circle class="ring-bg" cx="100" cy="100" r="90"/>
             <circle class="ring-progress" cx="100" cy="100" r="90"/>
           </svg>
+          <div class="ring-tick" aria-hidden="true"></div>
           <div class="timer-center">
             <button type="button" id="btn-pomodoro-num" class="pomodoro-num">#1</button>
             <div id="timer-display" class="timer-display">25:00</div>
@@ -73,20 +82,26 @@
 
         <div class="timer-controls">
           <button type="button" id="btn-start" class="start-btn">
-            <span class="play-icon">▶</span>
+            <span class="play-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
             <span data-i18n="start">Старт</span>
           </button>
-          <button type="button" id="btn-skip" class="skip-btn" title="Пропустить фазу">⏭</button>
+          <button type="button" id="btn-skip" class="skip-btn" title="Пропустить фазу" aria-label="Пропустить фазу">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
         </div>
 
         <div class="duration-presets">
-          <button type="button" class="preset active" data-min="25">25 <span data-i18n="min">мин</span></button>
-          <button type="button" class="preset" data-min="45">45 <span data-i18n="min">мин</span></button>
-          <button type="button" class="preset" data-min="50">50 <span data-i18n="min">мин</span></button>
+          <button type="button" class="preset active" data-min="25"><span>25</span> <span class="preset-unit" data-i18n="min">мин</span></button>
+          <button type="button" class="preset" data-min="45"><span>45</span> <span class="preset-unit" data-i18n="min">мин</span></button>
+          <button type="button" class="preset" data-min="50"><span>50</span> <span class="preset-unit" data-i18n="min">мин</span></button>
           <button type="button" class="preset" data-min="custom" data-i18n="custom">свои</button>
         </div>
 
-        <button type="button" id="scroll-down" class="scroll-hint">↓</button>
+        <button type="button" id="scroll-down" class="scroll-hint" aria-label="Scroll down">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
       </section>
 
       <!-- Dashboard section -->
@@ -135,12 +150,16 @@
           </div>
         </div>
 
-        <button type="button" id="scroll-up" class="scroll-hint up">↑</button>
+        <button type="button" id="scroll-up" class="scroll-hint up" aria-label="Scroll up">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
       </section>
 
       <!-- Floating actions -->
       <div class="fab-group">
-        <button type="button" id="btn-music" class="fab" title="Музыка">🎵</button>
+        <button type="button" id="btn-music" class="fab" title="Музыка" aria-label="Музыка">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
       </div>
 
       <!-- Music panel -->

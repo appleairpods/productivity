@@ -83,24 +83,26 @@ export async function saveSettings(settings) {
   await set('app', settings);
 }
 
+const DEFAULT_DIRECTION = {
+  id: 'default',
+  name: 'other',
+  nameKey: 'other',
+  weeklyBlocks: null,
+  unlimited: true,
+  color: '#6b7280',
+  isDefault: true,
+};
+
 export async function getDirections() {
   const store = await getStore('directions');
   return new Promise((resolve, reject) => {
     const req = store.getAll();
     req.onsuccess = () => {
       const dirs = req.result;
-      if (dirs.length === 0) {
-        resolve([{
-          id: 'default',
-          name: 'other',
-          nameKey: 'other',
-          weeklyBlocks: null,
-          unlimited: true,
-          color: '#6b7280',
-          isDefault: true,
-        }]);
+      if (!dirs.find(d => d.id === 'default')) {
+        resolve([DEFAULT_DIRECTION, ...dirs]);
       } else {
-        resolve(dirs);
+        resolve(dirs.sort((a, b) => (a.isDefault ? -1 : b.isDefault ? 1 : 0)));
       }
     };
     req.onerror = () => reject(req.error);
@@ -127,17 +129,14 @@ export async function deleteDirection(id) {
 }
 
 export async function initDefaultDirection() {
-  const dirs = await getDirections();
-  if (dirs.length === 0 || !dirs.find(d => d.id === 'default')) {
-    await saveDirection({
-      id: 'default',
-      name: 'other',
-      nameKey: 'other',
-      weeklyBlocks: null,
-      unlimited: true,
-      color: '#6b7280',
-      isDefault: true,
-    });
+  const store = await getStore('directions');
+  const dirs = await new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  if (!dirs.find(d => d.id === 'default')) {
+    await saveDirection({ ...DEFAULT_DIRECTION });
   }
 }
 
@@ -210,6 +209,10 @@ export async function exportAllData() {
 }
 
 export async function importAllData(data) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid backup format');
+  }
+
   const database = await openDB();
   const tx = database.transaction(['settings', 'directions', 'tasks', 'sessions'], 'readwrite');
 
@@ -222,8 +225,11 @@ export async function importAllData(data) {
     tx.onerror = () => reject(tx.error);
   });
 
-  if (data.settings) await saveSettings(data.settings);
+  if (data.settings) await saveSettings({ ...defaultSettings, ...data.settings });
   for (const d of data.directions || []) await saveDirection(d);
+  if (!(data.directions || []).find(d => d.id === 'default')) {
+    await saveDirection({ ...DEFAULT_DIRECTION });
+  }
   for (const t of data.tasks || []) await saveTask(t);
   for (const s of data.sessions || []) await addSession(s);
 }
